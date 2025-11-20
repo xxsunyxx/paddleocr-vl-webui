@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # PaddleOCR-VL API 服务（后端核心）
+  paddleocr-vl-api:
+    image: ccr-2vdh3abv-pub.cnc.bj.baidubce.com/paddlepaddle/paddleocr-vl:${API_IMAGE_TAG_SUFFIX:-latest-offline}
+    container_name: paddleocr-vl-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      paddleocr-vlm-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
+    user: root
+    restart: unless-stopped
+    environment:
+      - VLM_BACKEND=${VLM_BACKEND:-vllm}
+    command: /bin/bash -c "paddlex --serve --pipeline /home/paddleocr/pipeline_config_${VLM_BACKEND}.yaml"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - paddleocr-network
+
+  # PaddleOCR VLM 推理服务器（VLLM 后端）
+  paddleocr-vlm-server:
+    image: ccr-2vdh3abv-pub.cnc.bj.baidubce.com/paddlepaddle/paddleocr-genai-${VLM_BACKEND:-vllm}-server:${VLM_IMAGE_TAG_SUFFIX:-latest-offline}
+    container_name: paddleocr-vlm-server
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
+    user: root
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    networks:
+      - paddleocr-network
+
+  # 前端 Web 应用（我们的服务）
+  pandocr-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pandocr-web:latest
+    container_name: pandocr-web
+    ports:
+      - "8000:8000"
+    depends_on:
+      paddleocr-vl-api:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      - PADDLE_SERVICE_URL=http://paddleocr-vl-api:8080/layout-parsing
+    volumes:
+      # 持久化 OCR 提取的图片
+      - ocr_images:/app/static/ocr_images
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - paddleocr-network
+
+networks:
+  paddleocr-network:
+    driver: bridge
+
+volumes:
+  ocr_images:
+    driver: local
+

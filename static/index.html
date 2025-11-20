@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PandOCR - 智能文档解析</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Marked for Markdown preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <!-- Highlight.js for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- JSZip for creating zip files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <span class="icon">📄</span>
+                <h1>PandOCR</h1>
+            </div>
+            <div class="status-indicator">
+                <span id="model-status-dot" class="dot connecting"></span>
+                <span id="model-status-text">正在连接模型...</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="two-column-layout">
+                <!-- Left Column: Upload & Controls -->
+                <div class="left-column">
+                    <section class="upload-section">
+                        <div id="drop-zone" class="drop-zone">
+                            <div class="drop-content">
+                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <h2>拖放文件到此处</h2>
+                                <p class="sub-text">支持 PDF, PNG, JPG 格式</p>
+                                <button id="browse-btn" class="btn primary-btn">选择文件</button>
+                                <input type="file" id="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" hidden>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- OCR Options -->
+                    <section class="options-section">
+                        <h3>解析选项</h3>
+                        <div class="ocr-options-vertical">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="chart-recognition-switch" />
+                                <span>启用图表解析</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="doc-unwarping-switch" />
+                                <span>启用文档矫正</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="doc-orientation-switch" />
+                                <span>启用方向识别</span>
+                            </label>
+                        </div>
+                        <button id="start-btn" class="btn primary-btn full-width">开始解析</button>
+                    </section>
+
+                    <!-- Processing Queue (Left Column, Vertical) -->
+                    <section id="processing-queue" class="queue-section-vertical hidden">
+                        <div class="queue-header-vertical">
+                            <h3>📋 处理队列</h3>
+                            <div class="queue-header-actions">
+                                <span id="progress-text" class="progress-badge">0/0</span>
+                                <button id="clear-all-btn" class="btn text-btn-small">清空</button>
+                            </div>
+                        </div>
+                        <div id="queue-list" class="queue-list-vertical">
+                            <!-- Queue items will appear here -->
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Column: Results -->
+                <div class="right-column">
+                    <section class="results-section">
+                        <div class="section-header">
+                            <h3>转换结果</h3>
+                            <button id="download-all-btn" class="btn primary-btn">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                下载
+                            </button>
+                        </div>
+                        <div id="results-container" class="results-container">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <p>上传文件后，解析结果将在此显示</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>基于 PaddleOCR-VL & VLLM 构建</p>
+        </footer>
+    </div>
+
+    <!-- Templates -->
+    <template id="queue-item-template">
+        <div class="queue-item">
+            <div class="file-icon">
+                <img src="" alt="缩略图" class="thumbnail">
+            </div>
+            <div class="file-info">
+                <div class="file-name">document.pdf</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar"></div>
+                </div>
+                <div class="file-status">等待</div>
+            </div>
+        </div>
+    </template>
+
+    <template id="result-card-template">
+        <div class="result-card">
+            <div class="card-header">
+                <span class="page-number">第 1 页</span>
+                <div class="card-actions">
+                    <button class="btn icon-btn copy-btn" title="复制 Markdown">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="preview-split">
+                    <div class="image-preview">
+                        <img src="" alt="原始图片">
+                    </div>
+                    <div class="markdown-preview">
+                        <!-- Rendered Markdown -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
+

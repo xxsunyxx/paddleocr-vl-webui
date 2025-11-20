@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Project specific
+PaddleOCR-VL_Online_Demo/
+ocr_results_*.md
+ocr_results_*.zip
+*.log
+
+# Keep only the .gitkeep in ocr_images
+static/ocr_images/*
+!static/ocr_images/.gitkeep
+
+# Docker
+Dockerfile
+.dockerignore
+compose.yaml
+env.txt
+
+# Documentation
+README.md
+api.md
+
