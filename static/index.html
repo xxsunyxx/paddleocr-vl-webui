@@ -42,6 +42,7 @@
                                 </svg>
                                 <h2>拖放文件到此处</h2>
                                 <p class="sub-text">支持 PDF, PNG, JPG 格式</p>
+                                <p class="sub-text">或使用 Ctrl+V 粘贴图片</p>
                                 <button id="browse-btn" class="btn primary-btn">选择文件</button>
                                 <input type="file" id="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" hidden>
                             </div>
@@ -88,25 +89,53 @@
                     <section class="results-section">
                         <div class="section-header">
                             <h3>转换结果</h3>
-                            <button id="download-all-btn" class="btn primary-btn">
-                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                下载
-                            </button>
+                            <div class="view-options">
+                                <button id="single-page-btn" class="btn secondary-btn active">单页视图</button>
+                                <button id="multi-page-btn" class="btn secondary-btn">多页合并视图</button>
+                                <button id="download-all-btn" class="btn primary-btn">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    下载
+                                </button>
+                            </div>
                         </div>
-                        <div id="results-container" class="results-container">
-                            <div class="empty-state">
-                                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                <p>上传文件后，解析结果将在此显示</p>
+                        
+                        <!-- Single Page View -->
+                        <div id="single-page-view" class="view-container active">
+                            <div id="results-container" class="results-container">
+                                <div class="empty-state">
+                                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <p>上传文件后，解析结果将在此显示</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Multi Page View -->
+                        <div id="multi-page-view" class="view-container hidden">
+                            <div class="multi-page-tabs">
+                                <button id="multi-md-preview-btn" class="btn secondary-btn active">Markdown 预览</button>
+                                <button id="multi-md-source-btn" class="btn secondary-btn">Markdown 源码</button>
+                            </div>
+                            <div class="multi-page-content">
+                                <!-- Markdown Preview -->
+                                <div id="multi-md-preview" class="multi-md-view active">
+                                    <div class="empty-state">
+                                        <p>解析完成后，多页合并结果将在此显示</p>
+                                    </div>
+                                </div>
+                                <!-- Markdown Source -->
+                                <div id="multi-md-source" class="multi-md-view hidden">
+                                    <pre><code class="markdown"></code></pre>
+                                </div>
                             </div>
                         </div>
                     </section>
