@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # Target the Docker Compose Pipeline Service (Standard Port 8080)
-PADDLE_SERVICE_URL = os.getenv("PADDLE_SERVICE_URL", "http://127.0.0.1:8080/layout-parsing")
+PADDLE_SERVICE_URL = os.getenv("PADDLE_SERVICE_URL", "http://localhost:8080/layout-parsing")
 
 # Create directory for OCR images
 OCR_IMAGES_DIR = Path("static/ocr_images")
@@ -39,8 +39,8 @@ async def get_models():
 class OCRRequest(BaseModel):
     image: str # Base64 string
     useLayoutDetection: bool = True
-    useDocUnwarping: bool = False  # Match app.py default
-    useDocOrientationClassify: bool = False  # Match app.py default
+    useDocUnwarping: bool = False  # Default to False as per user request
+    useDocOrientationClassify: bool = False  # Default to False as per user request
     useChartRecognition: bool = False
 
 @app.post("/api/ocr")
@@ -67,6 +67,7 @@ async def proxy_ocr(request: OCRRequest):
             payload["useChartRecognition"] = True
         
         print(f"Sending request to Pipeline Service at {PADDLE_SERVICE_URL}...")
+        print(f"Full request payload: {payload}")
         
         async with httpx.AsyncClient(timeout=180.0) as client:
             resp = await client.post(
@@ -123,4 +124,3 @@ async def proxy_ocr(request: OCRRequest):
 if __name__ == "__main__":
     import uvicorn
     print(f"Starting server... Target Pipeline: {PADDLE_SERVICE_URL}")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
