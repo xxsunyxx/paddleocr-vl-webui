@@ -124,3 +124,4 @@ async def proxy_ocr(request: OCRRequest):
 if __name__ == "__main__":
     import uvicorn
     print(f"Starting server... Target Pipeline: {PADDLE_SERVICE_URL}")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
