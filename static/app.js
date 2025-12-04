@@ -456,7 +456,11 @@ function renderResult(item) {
     const markdownEditor = card.querySelector('.markdown-editor');
     const togglePreviewBtn = card.querySelector('.toggle-preview');
     const toggleEditBtn = card.querySelector('.toggle-edit');
+    const toggleKatexBtn = card.querySelector('.toggle-katex');
     const copyBtn = card.querySelector('.copy-btn');
+    
+    // Track current rendering mode (default or katex)
+    let currentRenderMode = 'default';
     
     // Set initial editor content
     markdownEditor.value = item.markdown || '(无内容)';
@@ -464,17 +468,43 @@ function renderResult(item) {
     // Render markdown function
     const renderMarkdown = () => {
         const content = markdownEditor.value;
-        const mdHtml = marked.parse(content);
-        markdownPreview.innerHTML = mdHtml;
         
-        // Render LaTeX equations with KaTeX
-        if (markdownPreview) {
-            renderMathInElement(markdownPreview, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false}
-                ]
-            });
+        // Simple approach: render all content with marked.js
+        // 使用marked解析Markdown
+        const renderer = new marked.Renderer();
+        
+        // 使用marked解析内容
+        const markedOptions = {
+            renderer: renderer,
+            gfm: true,
+            breaks: true,
+            sanitize: false,
+            mangle: false, // 禁用电子邮件地址混淆
+            headerIds: false // 禁用自动生成标题ID
+        };
+        
+        // 使用marked解析内容
+        const mdHtml = marked.parse(content, markedOptions);
+        
+        if (currentRenderMode === 'katex') {
+            // 在KaTeX渲染模式下，使用katex渲染LaTeX
+            markdownPreview.innerHTML = mdHtml;
+            
+            // 使用KaTeX渲染页面中的LaTeX公式
+            if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(markdownPreview, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false},
+                        {left: "\\(", right: "\\)", display: false},
+                        {left: "\\[", right: "\\]", display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        } else {
+            // 默认模式下，只使用marked渲染
+            markdownPreview.innerHTML = mdHtml;
         }
         
         // Update item's markdown
@@ -493,17 +523,31 @@ function renderResult(item) {
     togglePreviewBtn.addEventListener('click', () => {
         togglePreviewBtn.classList.add('active');
         toggleEditBtn.classList.remove('active');
+        toggleKatexBtn.classList.remove('active');
         markdownPreview.classList.remove('hidden');
         markdownEditor.classList.add('hidden');
+        currentRenderMode = 'default';
         renderMarkdown(); // Update preview from editor content
     });
     
     toggleEditBtn.addEventListener('click', () => {
         toggleEditBtn.classList.add('active');
         togglePreviewBtn.classList.remove('active');
+        toggleKatexBtn.classList.remove('active');
         markdownEditor.classList.remove('hidden');
         markdownPreview.classList.add('hidden');
         markdownEditor.focus();
+    });
+    
+    // Add event listener for KaTeX toggle button
+    toggleKatexBtn.addEventListener('click', () => {
+        toggleKatexBtn.classList.add('active');
+        togglePreviewBtn.classList.remove('active');
+        toggleEditBtn.classList.remove('active');
+        markdownPreview.classList.remove('hidden');
+        markdownEditor.classList.add('hidden');
+        currentRenderMode = 'katex';
+        renderMarkdown(); // Update preview with KaTeX rendering
     });
     
     // Update markdown in real-time when editing
@@ -677,14 +721,23 @@ function updateMultiPageView() {
     
     // 更新预览和源码
     if (mdPreview) {
-        mdPreview.innerHTML = marked.parse(mergedMarkdown);
-        // Render LaTeX equations with KaTeX
-        renderMathInElement(mdPreview, {
-            delimiters: [
-                {left: '$$', right: '$$', display: true},
-                {left: '$', right: '$', display: false}
-            ]
-        });
+        // 使用marked解析Markdown
+        const renderer = new marked.Renderer();
+        
+        // 使用marked解析内容
+        const markedOptions = {
+            renderer: renderer,
+            gfm: true,
+            breaks: true,
+            sanitize: false,
+            mangle: false, // 禁用电子邮件地址混淆
+            headerIds: false // 禁用自动生成标题ID
+        };
+        
+        // 使用marked解析内容
+        const mdHtml = marked.parse(mergedMarkdown, markedOptions);
+        
+        mdPreview.innerHTML = mdHtml;
     }
     if (mdSource) {
         const codeElement = mdSource.querySelector('code.markdown');
