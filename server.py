@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # Target the Docker Compose Pipeline Service (Standard Port 8080)
-PADDLE_SERVICE_URL = os.getenv("PADDLE_SERVICE_URL", "http://100.100.20.1:8080/layout-parsing")
+PADDLE_SERVICE_URL = os.getenv("PADDLE_SERVICE_URL", "http://localhost:8080/layout-parsing")
 
 # Create directory for OCR images
 OCR_IMAGES_DIR = Path("static/ocr_images")
